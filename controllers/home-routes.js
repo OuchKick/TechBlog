@@ -1,6 +1,6 @@
 const router = require('express').Router();
 // Connecting Home routes to the database
-const { Blog, User } = require('../models');
+const { Blog, User, Interaction } = require('../models');
 // Import the custom middleware
 const withAuth = require('../utils/auth');
 
@@ -11,14 +11,17 @@ router.get('/', async (req, res) => {
       // This is how we JOIN different models
       include: [
         {
+          model: Interaction,
+          attributes: ['comment_content'],
+        },
+        {
           model: User,
-          attributes: ['username'],
         },
       ],
     });
 
-    const blogs = dbBlogData.map((Blog) =>
-      Blog.get({ plain: true })
+    const blogs = dbBlogData.map((blogs) =>
+      blogs.get({ plain: true })
     );
 
     res.render('homepage', {
@@ -38,16 +41,18 @@ router.get('/blog/:id', withAuth, async (req, res) => {
     const dbBlogData = await Blog.findByPk(req.params.id, {
       include: [
         {
+          model: Interaction,
+          attributes: ['id, comment_content'],
+        },
+        {
           model: User,
-          attributes: [
-            'username',
-          ],
+          attributes: ['username, id'],
         },
       ],
     });
 
-    const blog = dbBlogData.get({ plain: true });
-    res.render('blog', { blog, loggedIn: req.session.loggedIn });
+    const blogs = dbBlogData.get({ plain: true });
+    res.render('blogs', { blogs, loggedIn: req.session.loggedIn });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
